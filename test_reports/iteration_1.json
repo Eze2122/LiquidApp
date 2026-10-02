@@ -1,0 +1,34 @@
+{
+  "summary": "LiquidApp Expo RN - Frontend only testing on web preview. All 16 requested test cases PASS: UI render (title/subtitle), segmentado turno/semanal, auto-calc % chofer (100-X), 4 opciones exactas de combustible, UI personalizado, casos matemáticos A-E (A: $60.000, B: $45.000, C: $51.000, D: $57.000, E: $90.000 + Excedente plataforma $50.000 mostrado por separado), validación total vacío (mensaje en error-box), navegación a /history, botón COPIAR muestra toast 'Copiado ✓', ELIMINAR quita el ítem, BORRAR HISTORIAL abre modal y confirma vaciando lista, y persistencia de AsyncStorage sobrevive al reload. Screenshot confirma netoDueño=$90.000, parteChofer=$60.000, tarjeta=$30.000 en Caso A. No se encontraron bugs funcionales. Issues menores de deprecation warnings de React Native Web (shadow* props y pointerEvents prop) presentes pero no bloquean. No deprecated expo packages (expo-av, expo-barcode-scanner, expo-background-fetch) encontrados.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [],
+    "react_native_issues": [
+      {"component": "StyleSheet shadow* props", "issue": "Deprecation warning en consola: '\"shadow*\" style props are deprecated. Use \"boxShadow\".' - afecta web preview solamente. Reference: /app/frontend/app/index.tsx:498-501 y /app/frontend/app/history.tsx:402-405"},
+      {"component": "View pointerEvents prop", "issue": "Deprecation warning: 'props.pointerEvents is deprecated. Use style.pointerEvents' en el toast. Reference: /app/frontend/app/history.tsx:234"}
+    ]
+  },
+  "test_report_links": [],
+  "action_items": [
+    "(Opcional, no bloqueante) Migrar 'shadowColor/shadowOffset/shadowOpacity/shadowRadius' a 'boxShadow' en los styles.card de index.tsx y history.tsx para evitar warnings en web.",
+    "(Opcional) Cambiar el prop pointerEvents='none' del toast a style={{ pointerEvents: 'none' }} en history.tsx."
+  ],
+  "critical_code_review_comments": [
+    "Código bien modularizado: lógica pura en /src/liquidapp/logic.ts, storage separado, componentes con testIDs completos.",
+    "Validaciones de input correctas (total <= 0, cash negativo, % fuera de rango, % combustible personalizado).",
+    "Buen uso de KeyboardAvoidingView + ScrollView + SafeAreaInsets.",
+    "No se detectan hardcoded URLs, uso correcto de AsyncStorage, sin backend según especificación."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A (sin backend)", "frontend": "100% (16/16)"},
+  "seed_data_creation": "No seed data. Se limpió localStorage al iniciar las pruebas para asegurar estado inicial limpio.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "App Expo single-stack con dos rutas (/ y /history). Todos los flows validados. Para reproducir: viewport 390x844, borrar localStorage antes de empezar, usar testIDs: input-porcentaje-dueno, input-total, input-cash, input-gnc, input-gasolina, fuel-option-{chofer|dueno|porcentaje|personalizado}, input-porc-combustible-dueno, btn-calcular, result-title, result-amount, btn-historial, btn-copy-{idx}, btn-delete-{idx}, btn-clear-all, btn-confirm-clear, toast, empty-history, error-box.",
+  "rca_of_issue": "N/A - no issues críticos encontrados."
+}

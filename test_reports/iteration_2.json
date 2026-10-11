@@ -1,0 +1,31 @@
+{
+  "summary": "Full frontend-only Playwright smoke run on mobile viewport (390x844) against the public Expo web preview. All 14 testable flows from the review request PASSED: home screen renders (LiquidApp title + 'Liquidación de turnos' subtitle + Premium pill), form validation (error-box when total empty), Prueba A (89000/120000/10000/50%/personalizado 50 -> result-amount $39.500, title 'Diego debe darle a Carlos', line-excedente $31.000, netos 39.500/39.500), Prueba B (120000/80000/5000/50%/personalizado 50 -> result-amount $17.500, line-tarjeta-ya-recibida $40.000, NO line-excedente, netos 57.500/57.500), Historial contains 'Dinero ya recibido por el dueño (tarjeta)' and 'Saldo pendiente' highlighted rows, Premium screen shows premium-price='USD 2 / mes', btn-subscribe-disabled with text 'DISPONIBLE PRÓXIMAMENTE' and aria-disabled=true (no navigation on tap), premium-notice visible, btn-back returns to calculator, no bottom-banner element on web (stub works, app does not crash), AsyncStorage history persists after full page reload. Non-blocking deprecation warnings observed in console: 'shadow* style props are deprecated. Use boxShadow' and 'props.pointerEvents is deprecated. Use style.pointerEvents' — purely cosmetic React Native Web warnings, flagged but not blocking.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [],
+    "react_native_issues": [
+      {"component": "StyleSheet shadow* props", "issue": "React Native Web warns: '\"shadow*\" style props are deprecated. Use \"boxShadow\".' Appears in index.tsx (styles.card uses shadowColor/shadowOffset/shadowOpacity/shadowRadius), premium.tsx (styles.card), history.tsx (styles.card). Non-blocking but should migrate to boxShadow for web parity. Reference: /app/frontend/app/index.tsx:574-578, /app/frontend/app/premium.tsx:92-96, /app/frontend/app/history.tsx:409-413"},
+    {"component": "pointerEvents prop", "issue": "React Native Web warns: 'props.pointerEvents is deprecated. Use style.pointerEvents'. Triggered by the toast View in history.tsx. Reference: /app/frontend/app/history.tsx:241"}
+    ]
+  },
+  "test_report_links": ["playwright inline script executed via mcp_browser_automation (no persisted .py file created; backend-only tests skipped per request)"] ,
+  "action_items": [
+    "Optional: migrate StyleSheet shadow* props to boxShadow string for RN Web (cosmetic warning).",
+    "Optional: replace <View pointerEvents=\"none\"> with style={{ pointerEvents: 'none' }} in history.tsx toast to clear the deprecation warning.",
+    "No functional changes required — all requested flows pass."
+  ],
+  "critical_code_review_comments": [
+    "Business logic (src/liquidapp/logic.ts) correctly matches both Prueba A and Prueba B expected numbers; cash > total branch properly produces excedentePlataforma and no tarjeta.",
+    "AdMob web stubs (interstitial.web.ts, BottomBanner.web.tsx) are proper no-ops; the Metro web bundle does not pull native modules and the calc flow never blocks on ads.",
+    "Premium screen correctly disables the subscribe button via `disabled` prop (RN renders aria-disabled=true on web) and renders the mandatory 'DISPONIBLE PRÓXIMAMENTE' label plus premium-notice copy."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A (frontend-only)", "frontend": "100% (14/14 checkpoints passed)"},
+  "seed_data_creation": "None. History is generated in-session by executing Prueba A then Prueba B through the UI.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "All E2E flows for LiquidApp calculator + premium placeholder + history work on web preview. If re-testing, use mobile viewport 390x844 and the public URL from EXPO_PUBLIC_BACKEND_URL. Use testID 'fuel-option-personalizado' + 'input-porc-combustible-dueno'=50 to represent the 50/50 split. The disabled subscribe button in RN Web exposes aria-disabled=true (not the html 'disabled' attribute).",
+  "rca_of_issue": "N/A — no bugs reproduced."
+}

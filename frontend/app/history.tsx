@@ -175,12 +175,19 @@ export default function HistoryScreen() {
                     />
                   </>
                 ) : null}
+                {(item.tarjeta ?? 0) > 0 ? (
+                  <Row
+                    label="Dinero ya recibido por el dueño (tarjeta)"
+                    value={formatMoney(item.tarjeta)}
+                    highlight
+                  />
+                ) : null}
                 <Row
                   label={
                     item.diferencia > 0
-                      ? `${item.nombreChofer} debe darle a ${item.nombreDueno}`
+                      ? `Saldo pendiente — ${item.nombreChofer} entrega a ${item.nombreDueno}`
                       : item.diferencia < 0
-                      ? `${item.nombreDueno} debe darle a ${item.nombreChofer}`
+                      ? `Saldo pendiente — ${item.nombreDueno} entrega a ${item.nombreChofer}`
                       : "No se deben dinero"
                   }
                   value={formatMoney(Math.abs(item.diferencia ?? 0))}

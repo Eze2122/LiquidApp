@@ -106,7 +106,7 @@ export default function HistoryScreen() {
                 />
                 {(item.excedentePlataforma ?? 0) > 0 ? (
                   <Row
-                    label="Excedente entregado al dueño"
+                    label="Excedente en efectivo"
                     value={formatMoney(item.excedentePlataforma)}
                     highlight
                   />

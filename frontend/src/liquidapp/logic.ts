@@ -87,10 +87,12 @@ export function calcularLiquidacion(i: CalcInput): CalcResult {
   const gananciaRealChofer = parteChofer - combustibleChofer;
 
   // Settlement:
-  // Cash the driver physically holds (excluding platform surplus).
-  // Assumes the driver paid the whole fuel bill out of that cash.
-  const efectivoBase = Math.min(i.cash, i.total);
-  const efectivoChoferTrasCombustible = efectivoBase - combustible;
+  // The driver physically holds `cash` (which may include an "excedente" over
+  // the total). Assume the driver paid the whole fuel bill out of that cash.
+  // The excedente is NOT part of the driver's/owner's split, but it belongs
+  // to the owner (platform cash goes to the owner), so it is included in the
+  // single transfer from driver to owner.
+  const efectivoChoferTrasCombustible = i.cash - combustible;
   const diferencia = efectivoChoferTrasCombustible - gananciaRealChofer;
 
   return {

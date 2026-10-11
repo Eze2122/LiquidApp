@@ -380,7 +380,7 @@ export default function CalculatorScreen() {
                 {result.excedentePlataforma > 0 ? (
                   <View style={styles.spotlightLineWarn} testID="line-excedente">
                     <Text style={styles.spotlightLineLabelWarn}>
-                      Excedente de efectivo para la plataforma
+                      Excedente que corresponde entregar al dueño
                     </Text>
                     <Text style={styles.spotlightLineValueWarn}>
                       {formatMoney(result.excedentePlataforma)}
@@ -400,7 +400,7 @@ export default function CalculatorScreen() {
               <Row label="Tarjeta en cuenta del dueño" value={formatMoney(result.tarjeta)} />
               {result.excedentePlataforma > 0 ? (
                 <Row
-                  label="Excedente de efectivo para la plataforma"
+                  label="Excedente que corresponde entregar al dueño"
                   value={formatMoney(result.excedentePlataforma)}
                 />
               ) : null}

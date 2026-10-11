@@ -75,8 +75,8 @@ assertCase("CASO D - Personalizado 20/80", calcularLiquidacion({
   diferencia: 57000, // 120000 - 15000 - 48000
 });
 
-// CASO E: Excedente
-assertCase("CASO E - Excedente plataforma", calcularLiquidacion({
+// CASO E: Excedente — ahora el excedente SE ENTREGA AL DUEÑO
+assertCase("CASO E - Excedente va al dueño", calcularLiquidacion({
   total: 150000, cash: 200000, gnc: 10000, gasolina: 5000,
   porcentajeDueno: 60, fuelMode: "chofer", porcCombustibleDueno: 0,
 }), {
@@ -84,7 +84,7 @@ assertCase("CASO E - Excedente plataforma", calcularLiquidacion({
   parteDueno: 90000, parteChofer: 60000,
   combustibleDueno: 0, combustibleChofer: 15000,
   netoDueno: 90000, gananciaRealChofer: 45000,
-  diferencia: 90000, // min(200000,150000)=150000; 150000-15000-45000=90000
+  diferencia: 140000, // 200000 - 15000 - 45000  (incluye los 50000 excedente al dueño)
 });
 
 // Caso: no se deben dinero
@@ -116,7 +116,8 @@ console.log("Done.");
 // ============================================================
 
 // PRUEBA A: Excedente de plataforma, reparto 50/50, combustible 50/50
-assertCase("PRUEBA A - Excedente plataforma 31000", calcularLiquidacion({
+// Con la nueva regla, el excedente de $31.000 se entrega al dueño junto con su neto.
+assertCase("PRUEBA A - Excedente 31000 va al dueño", calcularLiquidacion({
   total: 89000, cash: 120000, gnc: 10000, gasolina: 0,
   porcentajeDueno: 50, fuelMode: "personalizado", porcCombustibleDueno: 50,
 }), {
@@ -124,9 +125,21 @@ assertCase("PRUEBA A - Excedente plataforma 31000", calcularLiquidacion({
   parteDueno: 44500, parteChofer: 44500,
   combustibleDueno: 5000, combustibleChofer: 5000,
   netoDueno: 39500, gananciaRealChofer: 39500,
-  // chofer tiene en mano $89k (del reparto) - $10k combustible = $79k;
-  // debe quedarse con $39.5k → entrega $39.5k al dueño; excedente $31k va a plataforma
-  diferencia: 39500,
+  // 120000 - 10000 - 39500 = 70500 (incluye el excedente 31000)
+  diferencia: 70500,
+});
+
+// EJEMPLO del requerimiento (fix excedente): total a entregar al dueño = $85.000
+assertCase("EJEMPLO EXCEDENTE 30000 -> 85000 al dueño", calcularLiquidacion({
+  total: 120000, cash: 150000, gnc: 10000, gasolina: 0,
+  porcentajeDueno: 50, fuelMode: "personalizado", porcCombustibleDueno: 50,
+}), {
+  combustible: 10000, tarjeta: 0, excedentePlataforma: 30000,
+  parteDueno: 60000, parteChofer: 60000,
+  combustibleDueno: 5000, combustibleChofer: 5000,
+  netoDueno: 55000, gananciaRealChofer: 55000,
+  // 150000 - 10000 - 55000 = 85000 (55000 neto dueño + 30000 excedente)
+  diferencia: 85000,
 });
 
 // PRUEBA B: Efectivo + tarjeta, reparto 50/50, combustible 50/50

@@ -30,7 +30,7 @@
 {
 "image": "./assets/images/splash-image.png",
 "imageWidth": 400,
-"resizeMode": "contain",
+"resizeMode": "cover",
 "backgroundColor": "#f2f4f7"
 }
 ],

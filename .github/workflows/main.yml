@@ -1,25 +1,18 @@
 name: Build LiquidApp APK
 
-on:
-workflow_dispatch:
+on: workflow_dispatch
 
 jobs:
 build:
 runs-on: ubuntu-latest
-defaults:
-run:
-working-directory: frontend
-
 steps:
-  - name: Checkout repository
-    uses: actions/checkout@v4
+- name: Checkout repository
+uses: actions/checkout@v4
 
   - name: Setup Node.js
     uses: actions/setup-node@v4
     with:
       node-version: 20
-      cache: yarn
-      cache-dependency-path: frontend/yarn.lock
 
   - name: Setup Java
     uses: actions/setup-java@v4
@@ -27,15 +20,20 @@ steps:
       distribution: temurin
       java-version: "17"
 
+  - name: Install Yarn
+    run: npm install --global yarn
+
   - name: Install dependencies
+    working-directory: frontend
     run: yarn install --frozen-lockfile
 
   - name: Generate Android project
+    working-directory: frontend
     run: npx expo prebuild --platform android --non-interactive
 
   - name: Build APK
+    working-directory: frontend/android
     run: |
-      cd android
       chmod +x gradlew
       ./gradlew assembleRelease
 

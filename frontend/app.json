@@ -47,7 +47,7 @@
 [
 "react-native-google-mobile-ads",
 {
-"androidAppId": "ca-app-pub-3940256099942544~3347511713",
+"androidAppId": "ca-app-pub-7902708143841298~3236886398",
 "iosAppId": "ca-app-pub-3940256099942544~1458002511"
 }
 ]
@@ -64,7 +64,7 @@
 "owner": "eze2122"
 },
 "react-native-google-mobile-ads": {
-"android_app_id": "ca-app-pub-3940256099942544~3347511713",
+"android_app_id": "ca-app-pub-7902708143841298~3236886398",
 "ios_app_id": "ca-app-pub-3940256099942544~1458002511"
 }
 }

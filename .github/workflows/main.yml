@@ -1,45 +1,43 @@
 name: Build LiquidApp APK
 
-on: workflow_dispatch
-
+on:
+ workflow_dispatch:
 jobs:
-build:
-runs-on: ubuntu-latest
-steps:
-- name: Checkout repository
-uses: actions/checkout@v4
+ build:
+   runs-on: ubuntu-latest
+   steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+       node-version: "20"
+    - name: Setup Java
+      uses: actions/setup-java@v4
+      with:
+       distribution: temurin
+       java-version: "17"
 
-  - name: Setup Node.js
-    uses: actions/setup-node@v4
-    with:
-      node-version: 20
+    - name: Install Yarn
+      run: npm install --global yarn
 
-  - name: Setup Java
-    uses: actions/setup-java@v4
-    with:
-      distribution: temurin
-      java-version: "17"
+    - name: Install dependencies
+      working-directory: frontend
+      run: yarn install --frozen-lockfile
 
-  - name: Install Yarn
-    run: npm install --global yarn
+    - name: Generate Android project
+      working-directory: frontend
+      run: npx expo prebuild --platform android --non-interactive
 
-  - name: Install dependencies
-    working-directory: frontend
-    run: yarn install --frozen-lockfile
+    - name: Build APK
+      working-directory: frontend/android
+      run: |
+       chmod +x gradlew
+       ./gradlew assembleRelease
 
-  - name: Generate Android project
-    working-directory: frontend
-    run: npx expo prebuild --platform android --non-interactive
-
-  - name: Build APK
-    working-directory: frontend/android
-    run: |
-      chmod +x gradlew
-      ./gradlew assembleRelease
-
-  - name: Upload APK
-    uses: actions/upload-artifact@v4
-    with:
-      name: LiquidApp-APK
-      path: frontend/android/app/build/outputs/apk/release/app-release.apk
-      if-no-files-found: error
+    - name: Upload APK
+      uses: actions/upload-artifact@v4
+      with:
+       name: LiquidApp-APK
+       path: frontend/android/app/build/outputs/apk/release/app-release.apk
+       if-no-files-found: error

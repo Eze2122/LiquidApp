@@ -16,7 +16,8 @@
 "foregroundImage": "./assets/images/adaptive-icon.png",
 "backgroundColor": "#f2f4f7"
 },
-"package": "com.liquidapp.app"
+"package": "com.liquidapp.app",
+"versionCode": 103
 },
 "web": {
 "bundler": "metro",
@@ -28,10 +29,14 @@
 [
 "expo-splash-screen",
 {
+"backgroundColor": "#f2f4f7",
 "image": "./assets/images/splash-image.png",
 "imageWidth": 400,
-"resizeMode": "cover",
-"backgroundColor": "#f2f4f7"
+"android": {
+"backgroundColor": "#f2f4f7",
+"image": "./assets/images/splash-image.png",
+"imageWidth": 400
+}
 }
 ],
 "expo-font",

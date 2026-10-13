@@ -17,7 +17,7 @@
 "backgroundColor": "#f2f4f7"
 },
 "package": "com.liquidapp.app",
-"versionCode": 103
+"versionCode": 104
 },
 "web": {
 "bundler": "metro",

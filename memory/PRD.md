@@ -73,3 +73,20 @@ Proyecto cargado desde ZIP del usuario al entorno Emergent. Estado de las compro
 Decisiones del usuario registradas: publicar con ad unit IDs de prueba; dejar iOS App ID de prueba; versionCode por default (103); correr testing completo de UI (hecho); cargar el proyecto al entorno (hecho).
 
 Dependencias agregadas al entorno para que la app corra: `expo-clipboard`, `react-native-google-mobile-ads@17.2.0` (vía `yarn expo install`). Archivos protegidos preservados: `.env`, `metro.config.js`, `eas.json`, `backend/.env`.
+
+## Portabilidad / salida de Emergent — 2026-06 (cambios mínimos aplicados)
+
+Alcance aprobado por el usuario: solo lo esencial para build/portabilidad, conservando el backend.
+
+Archivos MODIFICADOS:
+- `frontend/app.json`: `version` 1.0.0 → **1.0.1**, `android.versionCode` 103 → **104**.
+- `frontend/package.json`: eliminado el hook `preinstall` (guard de Emergent `./scripts/cmd-guard.js`).
+- `backend/requirements.txt`: eliminada la dependencia privada `emergentintegrations==0.2.2` (verificado: `server.py` no la importa; nada depende de ella).
+- `README.md` (raíz): reescrito como guía completa de LiquidApp (estructura, setup, build EAS/Gradle, secretos, nota de portabilidad).
+
+Archivos CREADOS:
+- `frontend/.env.example`, `backend/.env.example` (placeholders, sin secretos).
+- `frontend/eas.example.json` (plantilla EAS; renombrar a `eas.json` al exportar — no se creó `eas.json` directo porque esa ruta la gestiona la plataforma Emergent).
+
+NO modificado: lógica, identidad visual, AdMob, Premium (sigue placeholder), backend `server.py`.
+Pendiente de limpieza opcional al exportar (documentado en README): `.emergent/`, `TEMPLATE.md`, `.gitconfig`, `memory/`, `scripts/cmd-guard/`.

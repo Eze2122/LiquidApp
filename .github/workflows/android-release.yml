@@ -30,8 +30,10 @@ jobs:
     if: ${{ github.event.inputs.confirm == 'build' }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout release branch
         uses: actions/checkout@v4
+        with:
+          ref: liquidapp-aab-googleplay-1.0.2
 
       - name: Preflight - verificar que TODOS los Secrets esten presentes
         env:

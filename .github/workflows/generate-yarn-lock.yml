@@ -2,6 +2,11 @@ name: Generate and save yarn.lock
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - liquidapp-aab-googleplay-1.0.2
+    paths:
+      - '.github/workflows/generate-yarn-lock.yml'
 
 permissions:
   contents: write

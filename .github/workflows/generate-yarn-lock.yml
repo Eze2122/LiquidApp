@@ -1,0 +1,46 @@
+name: Generate and save yarn.lock
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  generate-lockfile:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout release branch
+        uses: actions/checkout@v4
+        with:
+          ref: liquidapp-aab-googleplay-1.0.2
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Enable Yarn Classic
+        run: |
+          corepack enable
+          corepack prepare yarn@1.22.22 --activate
+          yarn --version
+
+      - name: Generate yarn.lock from package.json
+        working-directory: frontend
+        run: |
+          yarn install --ignore-scripts --non-interactive
+          test -s yarn.lock
+
+      - name: Commit yarn.lock to release branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add frontend/yarn.lock
+          if git diff --cached --quiet; then
+            echo "yarn.lock already exists and is unchanged."
+            exit 0
+          fi
+          git commit -m "Add generated yarn.lock for reproducible Android build"
+          git push origin HEAD:liquidapp-aab-googleplay-1.0.2

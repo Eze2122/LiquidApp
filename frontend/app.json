@@ -2,7 +2,7 @@
 "expo": {
 "name": "LiquidApp",
 "slug": "liquidapp",
-"version": "1.0.1",
+"version": "1.0.2",
 "orientation": "portrait",
 "icon": "./assets/images/icon.png",
 "scheme": "liquidapp",
@@ -17,7 +17,7 @@
 "backgroundColor": "#f2f4f7"
 },
 "package": "com.liquidapp.app",
-"versionCode": 104
+"versionCode": 106
 },
 "web": {
 "bundler": "metro",

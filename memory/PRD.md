@@ -90,3 +90,25 @@ Archivos CREADOS:
 
 NO modificado: lógica, identidad visual, AdMob, Premium (sigue placeholder), backend `server.py`.
 Pendiente de limpieza opcional al exportar (documentado en README): `.emergent/`, `TEMPLATE.md`, `.gitconfig`, `memory/`, `scripts/cmd-guard/`.
+
+## Release 1.0.2 (versionCode 106) — preparación de AAB firmado FUERA de Emergent — 2026-06
+
+Contexto: el AAB anterior (vía Publish de Emergent) salió con versionCode remoto (105), firma automática "Liquidapp Auditoria" e identidad/owner de Emergent → inservible para Play. Decisión del usuario: compilar fuera de Emergent (GitHub Actions) con su propia clave de carga.
+
+Archivos MODIFICADOS:
+- `frontend/app.json`: `version` → **1.0.2**, `android.versionCode` → **106** (confirmado por el usuario; sujeto a validar contra Play).
+- `frontend/eas.example.json`: `cli.appVersionSource: "local"` (evita autoincremento remoto del versionCode) + `build.production.credentialsSource: "local"` + `buildType: app-bundle`.
+
+Archivos CREADOS:
+- `.github/workflows/android-release.yml`: build de producción con `eas build --local` en GitHub Actions (sin créditos EAS/Emergent), keystore y credentials desde GitHub Secrets, verificación de manifest + certificado, AAB como artifact descargable. Disparo manual (workflow_dispatch con confirm="build").
+- `frontend/credentials.example.json`: plantilla (sin secretos) del credentials.json local.
+- `frontend/scripts/verify-aab.sh`: verifica package/versionName/versionCode + SHA-256/SHA-1 del certificado contra los fingerprints de la clave de carga del usuario.
+- `docs/ANDROID_RELEASE.md`: procedimiento completo (secrets, build GitHub Actions/EAS local/Gradle, verificación).
+
+Secrets requeridos (en GitHub, NUNCA en el repo): `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD`, `EXPO_TOKEN`. `.gitignore` confirma que `upload-keystore.jks` y `credentials.json` quedan ignorados.
+
+Fingerprints esperados de la clave de carga (para verificar, NO para firmar):
+- SHA-256: F6:A7:36:E4:11:89:E3:90:68:06:58:E1:61:83:49:88:54:69:8A:EE:78:A7:90:09:4E:B9:AA:D3:77:91:E3:21
+- SHA-1: 07:C3:C5:87:D3:21:67:28:9C:F8:EB:1F:1E:B2:41:D2:1F:56:6B:02
+
+BLOQUEOS (informados al usuario): el agente NO puede firmar con el keystore del usuario (no está en el entorno y es secreto) ni generar un AAB descargable dentro de Emergent. La compilación firmada se corre fuera de Emergent (GitHub Actions). El certificado del AAB solo se puede verificar sobre el archivo final generado por el usuario. NO se ejecutó ningún build. Lógica, pruebas, backend, AdMob y Premium intactos.

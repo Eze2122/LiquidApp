@@ -1,27 +1,55 @@
 name: LiquidApp - Android Release (AAB firmado)
 
-# Compilación de PRODUCCIÓN fuera de Emergent.
-# Usa `eas build --local`: el AAB se compila en el runner de GitHub (NO consume
-# créditos de EAS ni de Emergent) y se firma con TU clave de carga tomada de
-# GitHub Secrets. Disparo manual para no compilar sin querer.
+# Compilacion de PRODUCCION fuera de Emergent.
+# - Usa SIEMPRE `eas build --local` (compila en el runner de GitHub): NO usa la
+#   nube de EAS Build ni consume creditos de EAS/Emergent.
+# - Firma con TU clave de carga tomada de GitHub Secrets.
+# - Verificacion ESTRICTA: si package/versionName/versionCode/SHA-256 no coinciden,
+#   el workflow FALLA y NO publica el artifact.
+# - Los archivos sensibles (keystore, credentials.json) se borran SIEMPRE (incluso
+#   si un paso falla).
+# - Disparo manual para no compilar sin querer.
 
 on:
   workflow_dispatch:
     inputs:
       confirm:
-        description: 'Escribí "build" para confirmar la compilación de producción'
+        description: 'Escribi "build" para confirmar la compilacion de produccion'
         required: true
         default: ''
+
+env:
+  AAB_OUT: LiquidApp-1.0.2-106.aab
+  EXPECTED_PKG: com.liquidapp.app
+  EXPECTED_VNAME: 1.0.2
+  EXPECTED_VCODE: "106"
+  EXPECTED_SHA256: F6:A7:36:E4:11:89:E3:90:68:06:58:E1:61:83:49:88:54:69:8A:EE:78:A7:90:09:4E:B9:AA:D3:77:91:E3:21
 
 jobs:
   build-aab:
     if: ${{ github.event.inputs.confirm == 'build' }}
     runs-on: ubuntu-latest
-    env:
-      AAB_OUT: LiquidApp-1.0.2-106.aab
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Preflight - verificar que TODOS los Secrets esten presentes
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          missing=0
+          for v in ANDROID_KEYSTORE_BASE64 ANDROID_KEYSTORE_PASSWORD ANDROID_KEY_ALIAS ANDROID_KEY_PASSWORD EXPO_TOKEN; do
+            if [ -z "${!v}" ]; then echo "::error::Falta el secret requerido: $v"; missing=1; fi
+          done
+          if [ "$missing" -ne 0 ]; then
+            echo "Faltan secrets. Se aborta ANTES de compilar."
+            exit 1
+          fi
+          echo "Todos los secrets requeridos estan presentes."
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -46,9 +74,11 @@ jobs:
 
       - name: Decodificar keystore de carga (desde Secret)
         working-directory: frontend
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
         run: |
-          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > upload-keystore.jks
-          test -s upload-keystore.jks || { echo "ERROR: keystore vacío. Revisá el secret ANDROID_KEYSTORE_BASE64"; exit 1; }
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 -d > upload-keystore.jks
+          test -s upload-keystore.jks || { echo "::error::keystore vacio tras decodificar"; exit 1; }
 
       - name: Generar credentials.json (desde Secrets, no se commitea)
         working-directory: frontend
@@ -62,7 +92,7 @@ jobs:
       - name: Instalar EAS CLI
         run: npm i -g eas-cli
 
-      - name: Compilar AAB de producción (local, firmado con tu clave)
+      - name: Compilar AAB de produccion (eas build --local, SIN nube/creditos)
         working-directory: frontend
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
@@ -73,28 +103,52 @@ jobs:
             --local \
             --non-interactive \
             --output "$GITHUB_WORKSPACE/$AAB_OUT"
+          test -s "$GITHUB_WORKSPACE/$AAB_OUT" || { echo "::error::No se genero el AAB"; exit 1; }
 
-      - name: Verificar AAB (package / versiones / certificado)
+      - name: Verificacion ESTRICTA del AAB (falla si algo no coincide)
         run: |
+          set -euo pipefail
+          AAB="$GITHUB_WORKSPACE/$AAB_OUT"
+
           curl -sL -o bundletool.jar \
             https://github.com/google/bundletool/releases/download/1.17.2/bundletool-all-1.17.2.jar
-          echo "===== MANIFEST ====="
-          java -jar bundletool.jar dump manifest --bundle="$GITHUB_WORKSPACE/$AAB_OUT" \
-            | grep -Eo 'package="[^"]+"|android:versionCode="[0-9]+"|android:versionName="[^"]+"' || true
-          echo "===== CERTIFICADO (debe coincidir con tu clave de carga) ====="
-          keytool -printcert -jarfile "$GITHUB_WORKSPACE/$AAB_OUT" | grep -iE "SHA-?256:|SHA-?1:" || true
-          echo
-          echo "Esperado: package=com.liquidapp.app  versionName=1.0.2  versionCode=106"
-          echo "Esperado SHA-256: F6:A7:36:E4:11:89:E3:90:68:06:58:E1:61:83:49:88:54:69:8A:EE:78:A7:90:09:4E:B9:AA:D3:77:91:E3:21"
 
-      - name: Limpiar secretos del runner
-        if: always()
-        working-directory: frontend
-        run: rm -f upload-keystore.jks credentials.json
+          MANIFEST="$(java -jar bundletool.jar dump manifest --bundle="$AAB")"
+          PKG="$(printf '%s' "$MANIFEST"   | grep -oE 'package="[^"]+"'              | head -1 | sed -E 's/package="([^"]+)"/\1/')"
+          VCODE="$(printf '%s' "$MANIFEST" | grep -oE 'android:versionCode="[0-9]+"' | head -1 | sed -E 's/.*"([0-9]+)"/\1/')"
+          VNAME="$(printf '%s' "$MANIFEST" | grep -oE 'android:versionName="[^"]+"'  | head -1 | sed -E 's/.*versionName="([^"]+)"/\1/')"
 
-      - name: Publicar AAB como artifact descargable
+          # Certificado del AAB (firma jar). keytool es la herramienta valida para AAB.
+          SHA256_RAW="$(keytool -printcert -jarfile "$AAB" | grep -iE 'SHA-?256:' | head -1 | sed -E 's/.*SHA-?256:[[:space:]]*//I' | tr -d '[:space:]')"
+          SHA256_UP="$(printf '%s' "$SHA256_RAW" | tr '[:lower:]' '[:upper:]')"
+          EXP_SHA_UP="$(printf '%s' "$EXPECTED_SHA256" | tr '[:lower:]' '[:upper:]')"
+
+          echo "Leido  -> package=$PKG versionName=$VNAME versionCode=$VCODE"
+          echo "Leido  -> SHA-256=$SHA256_UP"
+          echo "Esperado-> package=$EXPECTED_PKG versionName=$EXPECTED_VNAME versionCode=$EXPECTED_VCODE"
+          echo "Esperado-> SHA-256=$EXP_SHA_UP"
+
+          fail=0
+          [ "$PKG"       = "$EXPECTED_PKG" ]   || { echo "::error::package $PKG != $EXPECTED_PKG"; fail=1; }
+          [ "$VNAME"     = "$EXPECTED_VNAME" ] || { echo "::error::versionName $VNAME != $EXPECTED_VNAME"; fail=1; }
+          [ "$VCODE"     = "$EXPECTED_VCODE" ] || { echo "::error::versionCode $VCODE != $EXPECTED_VCODE"; fail=1; }
+          [ -n "$SHA256_UP" ] || { echo "::error::no se pudo leer el SHA-256 del certificado"; fail=1; }
+          [ "$SHA256_UP" = "$EXP_SHA_UP" ]     || { echo "::error::SHA-256 del certificado NO coincide con la clave de carga esperada"; fail=1; }
+
+          if [ "$fail" -ne 0 ]; then
+            echo "VERIFICACION FALLIDA -> el artifact NO se publica."
+            exit 1
+          fi
+          echo "VERIFICACION OK -> AAB apto para Google Play."
+
+      - name: Publicar AAB como artifact descargable (solo si verifico OK)
         uses: actions/upload-artifact@v4
         with:
           name: LiquidApp-AAB
           path: ${{ env.AAB_OUT }}
           if-no-files-found: error
+
+      - name: Limpiar archivos sensibles (SIEMPRE, incluso si fallo un paso)
+        if: always()
+        working-directory: frontend
+        run: rm -f upload-keystore.jks credentials.json

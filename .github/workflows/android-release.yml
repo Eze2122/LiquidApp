@@ -1,0 +1,23 @@
+name: LiquidApp - Android Release (AAB firmado)
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Escribi "build" para confirmar la compilacion de produccion'
+        required: true
+        default: ''
+
+jobs:
+  dispatch-release-branch:
+    if: ${{ github.event.inputs.confirm == 'build' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dispatch release workflow on release branch
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh workflow run android-release.yml \
+            --repo "$GITHUB_REPOSITORY" \
+            --ref liquidapp-aab-googleplay-1.0.2 \
+            -f confirm=build

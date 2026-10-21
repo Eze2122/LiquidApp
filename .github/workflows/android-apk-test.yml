@@ -1,0 +1,34 @@
+name: LiquidApp - APK de prueba 1.0.3
+
+# Archivo disparador en la rama predeterminada. No compila desde main.
+# La compilacion solo se permite desde liquidapp-update-1.0.3-admob.
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Escribi APK para confirmar la compilacion'
+        required: true
+        default: ''
+
+permissions:
+  contents: read
+
+jobs:
+  branch-safety-guard:
+    if: ${{ github.ref_name != 'liquidapp-update-1.0.3-admob' || github.event.inputs.confirm != 'APK' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Bloquear ejecucion desde una rama no autorizada
+        run: |
+          echo "::error::Compilacion bloqueada. Selecciona la rama liquidapp-update-1.0.3-admob y escribe APK."
+          exit 1
+
+  build-apk:
+    if: ${{ github.ref_name == 'liquidapp-update-1.0.3-admob' && github.event.inputs.confirm == 'APK' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verificar que el flujo se ejecuto desde la rama de trabajo
+        run: |
+          test "$GITHUB_REF_NAME" = "liquidapp-update-1.0.3-admob"
+          echo "La rama de trabajo esta seleccionada. El archivo completo de compilacion vive en esa rama."
+          echo "Este disparador de seguridad no compila ni descarga codigo desde main."

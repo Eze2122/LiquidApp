@@ -1,5 +1,5 @@
 import { useFocusEffect, useRouter } from "expo-router";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   KeyboardAvoidingView,
   Platform,
@@ -54,7 +54,7 @@ export default function CalculatorScreen() {
   }, []);
 
   useFocusEffect(
-    useMemo(() => () => {
+    useCallback(() => {
       let active = true;
       void Promise.all([ticketTotal("gnc"), ticketTotal("nafta")]).then(([gnc, nafta]) => {
         if (active && gnc > 0) setGncStr(String(gnc));

@@ -1,4 +1,4 @@
-import { useRouter } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import {
   KeyboardAvoidingView,
@@ -18,6 +18,7 @@ import { BottomBanner } from "@/src/components/BottomBanner";
 import { calcularLiquidacion, FuelMode, formatMoney } from "@/src/liquidapp/logic";
 import { HistoryItem, saveHistoryItem } from "@/src/liquidapp/storage";
 import { usePremium } from "@/src/premium/state";
+import { ticketTotal } from "@/src/liquidapp/tickets";
 
 type TipoLiquidacion = "turno" | "semanal";
 
@@ -51,6 +52,17 @@ export default function CalculatorScreen() {
   useEffect(() => {
     preloadInterstitial();
   }, []);
+
+  useFocusEffect(
+    useMemo(() => () => {
+      let active = true;
+      void Promise.all([ticketTotal("gnc"), ticketTotal("nafta")]).then(([gnc, nafta]) => {
+        if (active && gnc > 0) setGncStr(String(gnc));
+        if (active && nafta > 0) setGasolinaStr(String(nafta));
+      });
+      return () => { active = false; };
+    }, [])
+  );
 
   const porcentajeDuenoNum = Number(porcentajeDuenoStr);
   const porcentajeChoferDisplay =
@@ -190,6 +202,7 @@ export default function CalculatorScreen() {
             </TouchableOpacity>
           </View>
 
+          <TouchableOpacity style={styles.utilityBtn} onPress={() => router.push("/expenses")}><Text style={styles.utilityBtnText}>CONTROL DE GASTOS</Text></TouchableOpacity>
           <Text style={styles.labelTop}>Tipo de liquidación</Text>
           <View style={styles.segment} testID="segment-tipo">
             {(["turno", "semanal"] as TipoLiquidacion[]).map((t) => {
@@ -267,6 +280,7 @@ export default function CalculatorScreen() {
             />
 
             <Text style={styles.label}>GNC</Text>
+            <TouchableOpacity style={styles.ticketBtn} onPress={() => router.push({ pathname: "/tickets", params: { fuel: "gnc" } })}><Text style={styles.ticketBtnText}>SUMAR TICKETS DE GNC</Text></TouchableOpacity>
             <TextInput
               style={styles.input}
               keyboardType="numeric"
@@ -278,6 +292,7 @@ export default function CalculatorScreen() {
             />
 
             <Text style={styles.label}>Nafta</Text>
+            <TouchableOpacity style={styles.ticketBtn} onPress={() => router.push({ pathname: "/tickets", params: { fuel: "nafta" } })}><Text style={styles.ticketBtnText}>SUMAR TICKETS DE NAFTA</Text></TouchableOpacity>
             <TextInput
               style={styles.input}
               keyboardType="numeric"
@@ -513,6 +528,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   premiumPillText: { color: "#fff", fontWeight: "bold", fontSize: 12 },
+  utilityBtn: { backgroundColor: "#d9fbe8", borderWidth: 1, borderColor: "#82d8a5", padding: 12, borderRadius: 10, alignItems: "center", marginBottom: 8 },
+  utilityBtnText: { color: "#14532d", fontWeight: "bold", fontSize: 14 },
+  ticketBtn: { backgroundColor: "#e8eaf0", padding: 10, borderRadius: 8, alignItems: "center", marginBottom: 8 },
+  ticketBtnText: { color: "#222", fontSize: 12, fontWeight: "bold" },
   labelTop: {
     fontWeight: "bold",
     marginTop: 12,

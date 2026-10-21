@@ -24,7 +24,7 @@ env:
 
 jobs:
   build-apk:
-    if: ${{ github.event.inputs.confirm == 'APK' }}
+    if: ${{ github.ref_name == 'liquidapp-update-1.0.3-admob' && github.event.inputs.confirm == 'APK' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

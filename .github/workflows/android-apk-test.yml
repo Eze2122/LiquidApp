@@ -92,28 +92,24 @@ jobs:
           set -euo pipefail
           APK="$GITHUB_WORKSPACE/$APK_OUT"
           SDK_ROOT="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-$HOME/Android/Sdk}}"
-          echo "Comprobando existencia del APK..."
-          test -s "$APK" || { echo "::error::No existe el APK generado"; exit 1; }
           APKSIGNER="$(find "$SDK_ROOT/build-tools" -type f -name apksigner 2>/dev/null | sort -V | tail -1)"
           APKANALYZER="$(find "$SDK_ROOT/cmdline-tools" "$SDK_ROOT/build-tools" -type f -name apkanalyzer 2>/dev/null | sort -V | tail -1)"
-          [ -x "$APKSIGNER" ] || { echo "::error::No se encontro apksigner"; exit 1; }
-          [ -x "$APKANALYZER" ] || { echo "::error::No se encontro apkanalyzer"; exit 1; }
-          echo "Comprobando firma criptografica..."
-          "$APKSIGNER" verify --print-certs "$APK" > signer.txt || { echo "::error::apksigner verify fallo"; exit 1; }
-          echo "Leyendo identificador y version..."
-          PKG="$("$APKANALYZER" manifest application-id "$APK")" || { echo "::error::No se pudo leer el paquete"; exit 1; }
-          VNAME="$("$APKANALYZER" manifest version-name "$APK")" || { echo "::error::No se pudo leer versionName"; exit 1; }
-          VCODE="$("$APKANALYZER" manifest version-code "$APK")" || { echo "::error::No se pudo leer versionCode"; exit 1; }
-          echo "Paquete=$PKG versionName=$VNAME versionCode=$VCODE"
-          [ "$PKG" = "$EXPECTED_PKG" ] || { echo "::error::Paquete incorrecto"; exit 1; }
-          [ "$VNAME" = "$EXPECTED_VNAME" ] || { echo "::error::versionName incorrecto"; exit 1; }
-          [ "$VCODE" = "$EXPECTED_VCODE" ] || { echo "::error::versionCode incorrecto"; exit 1; }
-          echo "Comprobando certificado de firma..."
-          SHA256="$(grep -i -m1 'Signer #1 certificate SHA-256 digest:' signer.txt | sed 's/.*: *//' | tr -d ':' | tr '[:lower:]' '[:upper:]')" || { echo "::error::No se pudo leer SHA-256 del certificado"; exit 1; }
+          if [ ! -x "$APKSIGNER" ]; then echo "::error::No se encontro apksigner"; exit 1; fi
+          if [ ! -x "$APKANALYZER" ]; then echo "::error::No se encontro apkanalyzer"; exit 1; fi
+          "$APKSIGNER" verify --print-certs "$APK" > signer.txt || { echo "::error::El APK no supera la validacion criptografica"; exit 1; }
+          PKG="$("$APKANALYZER" manifest application-id "$APK")"
+          VNAME="$("$APKANALYZER" manifest version-name "$APK")"
+          VCODE="$("$APKANALYZER" manifest version-code "$APK")"
+          SHA256="$(grep -i 'Signer #1 certificate SHA-256 digest:' signer.txt | head -1 | sed 's/.*: *//' | tr -d ':' | tr '[:lower:]' '[:upper:]' || true)"
           EXPECTED="$(printf '%s' "$EXPECTED_SHA256" | tr -d ':' | tr '[:lower:]' '[:upper:]')"
-          echo "SHA-256 firma=$SHA256"
-          [ -n "$SHA256" ] && [ "$SHA256" = "$EXPECTED" ] || { echo "::error::La firma no coincide con la clave de carga esperada"; exit 1; }
-          echo "Verificacion completa: APK aprobado"
+          echo "Paquete detectado: $PKG"
+          echo "Version detectada: $VNAME"
+          echo "Codigo detectado: $VCODE"
+          echo "SHA256 firma detectada: $SHA256"
+          if [ "$PKG" != "$EXPECTED_PKG" ]; then echo "::error::Paquete incorrecto: esperado $EXPECTED_PKG"; exit 1; fi
+          if [ "$VNAME" != "$EXPECTED_VNAME" ]; then echo "::error::Version incorrecta: esperada $EXPECTED_VNAME"; exit 1; fi
+          if [ "$VCODE" != "$EXPECTED_VCODE" ]; then echo "::error::Codigo incorrecto: esperado $EXPECTED_VCODE"; exit 1; fi
+          if [ -z "$SHA256" ] || [ "$SHA256" != "$EXPECTED" ]; then echo "::error::Firma distinta de la esperada"; exit 1; fi
 
       - name: Subir APK descargable
         uses: actions/upload-artifact@v4

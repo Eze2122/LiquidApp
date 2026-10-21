@@ -1,0 +1,119 @@
+name: LiquidApp - APK de prueba 1.0.3
+
+# Flujo independiente: no modifica ni reemplaza el flujo de AAB.
+# Compila localmente en GitHub Actions; no usa la nube de EAS Build.
+# Usa la clave de carga guardada en GitHub Secrets y verifica paquete, version y firma.
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Escribi APK para confirmar la compilacion'
+        required: true
+        default: ''
+
+permissions:
+  contents: read
+
+env:
+  APK_OUT: LiquidApp-1.0.3-107.apk
+  EXPECTED_PKG: com.liquidapp.app
+  EXPECTED_VNAME: 1.0.3
+  EXPECTED_VCODE: "107"
+  EXPECTED_SHA256: F6:A7:36:E4:11:89:E3:90:68:06:58:E1:61:83:49:88:54:69:8A:EE:78:A7:90:09:4E:B9:AA:D3:77:91:E3:21
+
+jobs:
+  build-apk:
+    if: ${{ github.event.inputs.confirm == 'APK' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verificar secrets requeridos
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          missing=0
+          for v in ANDROID_KEYSTORE_BASE64 ANDROID_KEYSTORE_PASSWORD ANDROID_KEY_ALIAS ANDROID_KEY_PASSWORD EXPO_TOKEN; do
+            if [ -z "${!v}" ]; then echo "::error::Falta el secret requerido: $v"; missing=1; fi
+          done
+          [ "$missing" -eq 0 ] || { echo "Se aborta antes de compilar."; exit 1; }
+
+      - name: Configurar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Configurar Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Instalar dependencias
+        working-directory: frontend
+        run: |
+          corepack enable
+          corepack prepare yarn@1.22.22 --activate
+          yarn install --non-interactive
+          test -s yarn.lock
+
+      - name: Preparar perfil APK y credenciales locales
+        working-directory: frontend
+        run: |
+          node -e 'const fs=require("fs");fs.writeFileSync("eas.json",JSON.stringify({cli:{version:">= 16.0.0",appVersionSource:"local"},build:{preview:{distribution:"internal",credentialsSource:"local",autoIncrement:false,android:{buildType:"apk"}}}},null,2))'
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 -d > upload-keystore.jks
+          test -s upload-keystore.jks
+          node -e 'const fs=require("fs");fs.writeFileSync("credentials.json",JSON.stringify({android:{keystore:{keystorePath:"upload-keystore.jks",keystorePassword:process.env.KS_PASS,keyAlias:process.env.KEY_ALIAS,keyPassword:process.env.KEY_PASS}}},null,2))'
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KS_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASS: ${{ secrets.ANDROID_KEY_PASSWORD }}
+
+      - name: Instalar EAS CLI
+        run: npm install --global eas-cli
+
+      - name: Compilar APK localmente
+        working-directory: frontend
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          eas build --platform android --profile preview --local --non-interactive --output "$GITHUB_WORKSPACE/$APK_OUT"
+          test -s "$GITHUB_WORKSPACE/$APK_OUT"
+
+      - name: Verificar APK y firma
+        run: |
+          set -euo pipefail
+          APK="$GITHUB_WORKSPACE/$APK_OUT"
+          command -v apksigner
+          apksigner verify --print-certs "$APK" > signer.txt
+          PKG="$(apkanalyzer manifest application-id "$APK")"
+          VNAME="$(apkanalyzer manifest version-name "$APK")"
+          VCODE="$(apkanalyzer manifest version-code "$APK")"
+          SHA256="$(grep -i 'Signer #1 certificate SHA-256 digest:' signer.txt | head -1 | sed 's/.*: *//' | tr -d ':' | tr '[:lower:]' '[:upper:]')"
+          EXPECTED="$(printf '%s' "$EXPECTED_SHA256" | tr -d ':' | tr '[:lower:]' '[:upper:]')"
+          echo "Paquete=$PKG versionName=$VNAME versionCode=$VCODE"
+          echo "SHA-256 firma=$SHA256"
+          [ "$PKG" = "$EXPECTED_PKG" ]
+          [ "$VNAME" = "$EXPECTED_VNAME" ]
+          [ "$VCODE" = "$EXPECTED_VCODE" ]
+          [ -n "$SHA256" ] && [ "$SHA256" = "$EXPECTED" ] || { echo "::error::La firma no coincide con la clave de carga esperada."; exit 1; }
+
+      - name: Subir APK descargable
+        uses: actions/upload-artifact@v4
+        with:
+          name: LiquidApp-APK-1.0.3-107
+          path: ${{ env.APK_OUT }}
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Borrar archivos sensibles
+        if: always()
+        working-directory: frontend
+        run: rm -f upload-keystore.jks credentials.json eas.json

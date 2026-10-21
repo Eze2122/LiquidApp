@@ -91,11 +91,15 @@ jobs:
         run: |
           set -euo pipefail
           APK="$GITHUB_WORKSPACE/$APK_OUT"
-          command -v apksigner
-          apksigner verify --print-certs "$APK" > signer.txt
-          PKG="$(apkanalyzer manifest application-id "$APK")"
-          VNAME="$(apkanalyzer manifest version-name "$APK")"
-          VCODE="$(apkanalyzer manifest version-code "$APK")"
+          SDK_ROOT="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-$HOME/Android/Sdk}}"
+          APKSIGNER="$(find "$SDK_ROOT/build-tools" -type f -name apksigner 2>/dev/null | sort -V | tail -1)"
+          APKANALYZER="$(find "$SDK_ROOT/cmdline-tools" "$SDK_ROOT/build-tools" -type f -name apkanalyzer 2>/dev/null | sort -V | tail -1)"
+          [ -x "$APKSIGNER" ] || { echo "::error::No se encontro apksigner en el SDK de Android."; exit 1; }
+          [ -x "$APKANALYZER" ] || { echo "::error::No se encontro apkanalyzer en el SDK de Android."; exit 1; }
+          "$APKSIGNER" verify --print-certs "$APK" > signer.txt
+          PKG="$("$APKANALYZER" manifest application-id "$APK")"
+          VNAME="$("$APKANALYZER" manifest version-name "$APK")"
+          VCODE="$("$APKANALYZER" manifest version-code "$APK")"
           SHA256="$(grep -i 'Signer #1 certificate SHA-256 digest:' signer.txt | head -1 | sed 's/.*: *//' | tr -d ':' | tr '[:lower:]' '[:upper:]')"
           EXPECTED="$(printf '%s' "$EXPECTED_SHA256" | tr -d ':' | tr '[:lower:]' '[:upper:]')"
           echo "Paquete=$PKG versionName=$VNAME versionCode=$VCODE"

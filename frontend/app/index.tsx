@@ -203,6 +203,7 @@ export default function CalculatorScreen() {
           </View>
 
           <TouchableOpacity style={styles.utilityBtn} onPress={() => router.push("/expenses")}><Text style={styles.utilityBtnText}>CONTROL DE GASTOS</Text></TouchableOpacity>
+          <TouchableOpacity style={styles.utilityBtn} onPress={() => router.push("/photo-history")}><Text style={styles.utilityBtnText}>HISTORIAL DE FOTOS DE TICKETS</Text></TouchableOpacity>
           <Text style={styles.labelTop}>Tipo de liquidación</Text>
           <View style={styles.segment} testID="segment-tipo">
             {(["turno", "semanal"] as TipoLiquidacion[]).map((t) => {

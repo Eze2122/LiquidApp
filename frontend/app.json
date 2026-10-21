@@ -50,6 +50,14 @@
           "androidAppId": "ca-app-pub-7902708143841298~3236886398",
           "iosAppId": "ca-app-pub-3940256099942544~1458002511"
         }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "LiquidApp necesita acceder a tus fotos para guardar tickets de combustible.",
+          "cameraPermission": "LiquidApp necesita usar la cámara para fotografiar tickets de combustible.",
+          "microphonePermission": false
+        }
       ]
     ],
     "experiments": {

@@ -281,7 +281,7 @@ export default function CalculatorScreen() {
             />
 
             <Text style={styles.label}>GNC</Text>
-            <TouchableOpacity style={styles.ticketBtn} onPress={() => router.push({ pathname: "/tickets", params: { fuel: "gnc" } })}><Text style={styles.ticketBtnText}>SUMAR TICKETS DE GNC</Text></TouchableOpacity>
+            <View style={styles.ticketActions}><TouchableOpacity style={[styles.ticketBtn, styles.ticketAction]} onPress={() => router.push({ pathname: "/tickets", params: { fuel: "gnc" } })}><Text style={styles.ticketBtnText}>SUMAR TICKETS DE GNC</Text></TouchableOpacity><TouchableOpacity style={[styles.ticketBtn, styles.filesBtn]} onPress={() => router.push({ pathname: "/photo-history", params: { fuel: "gnc" } })}><Text style={styles.ticketBtnText}>ARCHIVOS CARGADOS</Text></TouchableOpacity></View>
             <TextInput
               style={styles.input}
               keyboardType="numeric"
@@ -293,7 +293,7 @@ export default function CalculatorScreen() {
             />
 
             <Text style={styles.label}>Nafta</Text>
-            <TouchableOpacity style={styles.ticketBtn} onPress={() => router.push({ pathname: "/tickets", params: { fuel: "nafta" } })}><Text style={styles.ticketBtnText}>SUMAR TICKETS DE NAFTA</Text></TouchableOpacity>
+            <View style={styles.ticketActions}><TouchableOpacity style={[styles.ticketBtn, styles.ticketAction]} onPress={() => router.push({ pathname: "/tickets", params: { fuel: "nafta" } })}><Text style={styles.ticketBtnText}>SUMAR TICKETS DE NAFTA</Text></TouchableOpacity><TouchableOpacity style={[styles.ticketBtn, styles.filesBtn]} onPress={() => router.push({ pathname: "/photo-history", params: { fuel: "nafta" } })}><Text style={styles.ticketBtnText}>ARCHIVOS CARGADOS</Text></TouchableOpacity></View>
             <TextInput
               style={styles.input}
               keyboardType="numeric"
@@ -531,7 +531,10 @@ const styles = StyleSheet.create({
   premiumPillText: { color: "#fff", fontWeight: "bold", fontSize: 12 },
   utilityBtn: { backgroundColor: "#d9fbe8", borderWidth: 1, borderColor: "#82d8a5", padding: 12, borderRadius: 10, alignItems: "center", marginBottom: 8 },
   utilityBtnText: { color: "#14532d", fontWeight: "bold", fontSize: 14 },
-  ticketBtn: { backgroundColor: "#e8eaf0", padding: 10, borderRadius: 8, alignItems: "center", marginBottom: 8 },
+  ticketActions: { flexDirection: "row", gap: 8, marginBottom: 8 },
+  ticketAction: { flex: 1 },
+  filesBtn: { flex: 1, backgroundColor: "#d9fbe8", borderWidth: 1, borderColor: "#82d8a5" },
+  ticketBtn: { backgroundColor: "#e8eaf0", padding: 10, borderRadius: 8, alignItems: "center", marginBottom: 0 },
   ticketBtnText: { color: "#222", fontSize: 12, fontWeight: "bold" },
   labelTop: {
     fontWeight: "bold",

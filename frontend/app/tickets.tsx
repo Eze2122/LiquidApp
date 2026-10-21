@@ -7,12 +7,12 @@ const money = (n:number) => new Intl.NumberFormat("es-AR",{style:"currency",curr
 export default function TicketsScreen() {
  const router=useRouter(); const params=useLocalSearchParams<{fuel?:string}>();
  const fuel: "gnc"|"nafta" = params.fuel === "nafta" ? "nafta" : "gnc";
- const [amount,setAmount]=useState(""); const [note,setNote]=useState(""); const [items,setItems]=useState<FuelTicket[]>([]);
+ const [amount,setAmount]=useState(""); const [note,setNote]=useState(""); const [items,setItems]=useState<FuelTicket[]>([]); const [batchId]=useState(()=>String(Date.now()));
  const load=async()=>setItems(await getTickets());
  useEffect(()=>{void load();},[]);
  const filtered=useMemo(()=>items.filter(x=>x.fuel===fuel),[items,fuel]);
- const total=filtered.reduce((s,x)=>s+x.amount,0);
- const save=async()=>{const n=Number(amount.replace(",", ".")); if(!Number.isFinite(n)||n<=0)return; await addTicket({id:String(Date.now()),fuel,amount:n,date:new Date().toISOString(),note:note.trim()||undefined});setAmount("");setNote("");await load();};
+ const sessionTickets=filtered.filter(x=>x.batchId===batchId); const total=sessionTickets.reduce((s,x)=>s+x.amount,0);
+ const save=async()=>{const n=Number(amount.replace(",", ".")); if(!Number.isFinite(n)||n<=0)return; await addTicket({id:String(Date.now()),batchId,fuel,amount:n,date:new Date().toISOString(),note:note.trim()||undefined});setAmount("");setNote("");await load();};
  const remove=async(id:string)=>{await deleteTicket(id);await load();};
  return <ScrollView style={s.root} contentContainerStyle={s.container}>
   <Text style={s.title}>Tickets de {fuel==="gnc"?"GNC":"nafta"}</Text>
@@ -20,7 +20,7 @@ export default function TicketsScreen() {
   <View style={s.card}><Text style={s.label}>Importe del ticket (ARS)</Text><TextInput style={s.input} keyboardType="decimal-pad" value={amount} onChangeText={setAmount} placeholder="Ej. 8500" placeholderTextColor="#888"/>
   <Text style={s.label}>Nota (opcional)</Text><TextInput style={s.input} value={note} onChangeText={setNote} placeholder="Estación, número de ticket..." placeholderTextColor="#888"/>
   <TouchableOpacity style={s.primary} onPress={()=>void save()}><Text style={s.primaryText}>SUMAR TICKET</Text></TouchableOpacity>
-  <Text style={s.count}>{filtered.length} ticket(s) sumados</Text><Text style={s.total}>{money(total)}</Text>
+  <Text style={s.count}>{sessionTickets.length} ticket(s) sumados</Text><Text style={s.total}>{money(total)}</Text>
   <Text style={s.hint}>Al volver a la liquidación, usá este total para completar el combustible.</Text></View>
   <Text style={s.section}>Tickets cargados</Text>
   {filtered.length===0?<Text style={s.empty}>Todavía no cargaste tickets de este combustible.</Text>:filtered.map(x=><View style={s.item} key={x.id}><View style={{flex:1}}><Text style={s.itemAmount}>{money(x.amount)}</Text><Text style={s.date}>{new Date(x.date).toLocaleString("es-AR")}{x.note?" · "+x.note:""}</Text></View><TouchableOpacity onPress={()=>void remove(x.id)}><Text style={s.delete}>Eliminar</Text></TouchableOpacity></View>)}

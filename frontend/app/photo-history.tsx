@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { useLocalSearchParams } from "expo-router";
 import { useRouter } from "expo-router";
 import { Alert, Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import * as ImagePicker from "expo-image-picker";
@@ -12,17 +13,19 @@ function shiftDate(value: string, amount: number) {
 
 export default function TicketPhotoHistoryScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams<{ fuel?: string }>();
+  const initialFuel: "gnc" | "nafta" = params.fuel === "nafta" ? "nafta" : "gnc";
   const [selectedDate, setSelectedDate] = useState(localDateString());
   const [items, setItems] = useState<TicketPhoto[]>([]);
   const [editDates, setEditDates] = useState<Record<string, string>>({});
   const [note, setNote] = useState("");
-  const [fuel, setFuel] = useState<"gnc" | "nafta">("gnc");
+  const [fuel, setFuel] = useState<"gnc" | "nafta">(initialFuel);
   const load = useCallback(async () => {
     const all = await getTicketPhotos();
     setItems(all.sort((a, b) => b.createdAt.localeCompare(a.createdAt)));
   }, []);
   useEffect(() => { void load(); }, [load]);
-  const dayItems = items.filter(item => item.date === selectedDate);
+  const dayItems = items.filter(item => item.date === selectedDate && item.fuel === (params.fuel === "nafta" ? "nafta" : params.fuel === "gnc" ? "gnc" : item.fuel));
 
   const chooseImage = async (camera: boolean) => {
     try {
@@ -74,7 +77,7 @@ export default function TicketPhotoHistoryScreen() {
   ]);
 
   return <ScrollView style={s.root} contentContainerStyle={s.container}>
-    <Text style={s.title}>Historial de fotos de tickets</Text>
+    <Text style={s.title}>Archivos cargados · {params.fuel === "gnc" ? "GNC" : params.fuel === "nafta" ? "Nafta" : "Tickets"}</Text>
     <Text style={s.subtitle}>Las fotos se guardan dentro de LiquidApp y se organizan por la fecha que elijas. Podés cargar fotos atrasadas, cambiarles la fecha o borrarlas.</Text>
     <View style={s.card}>
       <Text style={s.label}>Ver fotos de esta fecha (AAAA-MM-DD)</Text>
@@ -96,7 +99,7 @@ export default function TicketPhotoHistoryScreen() {
       </View>
     </View>
     <Text style={s.section}>Fotos del {selectedDate} ({dayItems.length})</Text>
-    {dayItems.length === 0 ? <Text style={s.empty}>No hay fotos asignadas a esta fecha. Podés agregar fotos aunque el ticket sea de un día anterior.</Text> : dayItems.map(item => <View style={s.photoCard} key={item.id}>
+    {dayItems.length === 0 ? <Text style={s.empty}>No hay fotos cargadas para este combustible y fecha. Podés agregar fotos aunque el ticket sea de un día anterior.</Text> : dayItems.map(item => <View style={s.photoCard} key={item.id}>
       <Image source={{ uri: item.uri }} style={s.photo} resizeMode="contain" />
       <Text style={s.photoMeta}>{item.fuel ? item.fuel.toUpperCase() : "TICKET"}{item.note ? " · " + item.note : ""}</Text>
       <Text style={s.label}>Cambiar fecha (AAAA-MM-DD)</Text>

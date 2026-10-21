@@ -96,16 +96,16 @@ jobs:
           APKANALYZER="$(find "$SDK_ROOT/cmdline-tools" "$SDK_ROOT/build-tools" -type f -name apkanalyzer 2>/dev/null | sort -V | tail -1)"
           if [ ! -x "$APKSIGNER" ]; then echo "::error::No se encontro apksigner"; exit 1; fi
           if [ ! -x "$APKANALYZER" ]; then echo "::error::No se encontro apkanalyzer"; exit 1; fi
-          "$APKSIGNER" verify --print-certs "$APK" > signer.txt || { echo "::error::El APK no supera la validacion criptografica"; exit 1; }
+          "$APKSIGNER" verify --print-certs "$APK" > signer.txt 2>&1 || { echo "::error::El APK no supera la validacion criptografica"; exit 1; }
           PKG="$("$APKANALYZER" manifest application-id "$APK")"
           VNAME="$("$APKANALYZER" manifest version-name "$APK")"
           VCODE="$("$APKANALYZER" manifest version-code "$APK")"
-          SHA256="$(grep -i 'Signer #1 certificate SHA-256 digest:' signer.txt | head -1 | sed 's/.*: *//' | tr -d ':' | tr '[:lower:]' '[:upper:]' || true)"
+          SHA256="$(grep -iE 'SHA-256 digest|SHA256' signer.txt | head -1 | sed 's/.*: *//' | tr -d ':' | tr '[:lower:]' '[:upper:]' || true)"
           EXPECTED="$(printf '%s' "$EXPECTED_SHA256" | tr -d ':' | tr '[:lower:]' '[:upper:]')"
           echo "Paquete detectado: $PKG"
           echo "Version detectada: $VNAME"
           echo "Codigo detectado: $VCODE"
-          echo "SHA256 firma detectada: $SHA256"
+          echo "Salida de apksigner (certificado):"; cat signer.txt; echo "SHA256 firma detectada: $SHA256"
           if [ "$PKG" != "$EXPECTED_PKG" ]; then echo "::error::Paquete incorrecto: esperado $EXPECTED_PKG"; exit 1; fi
           if [ "$VNAME" != "$EXPECTED_VNAME" ]; then echo "::error::Version incorrecta: esperada $EXPECTED_VNAME"; exit 1; fi
           if [ "$VCODE" != "$EXPECTED_VCODE" ]; then echo "::error::Codigo incorrecto: esperado $EXPECTED_VCODE"; exit 1; fi

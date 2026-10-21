@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Alert, Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { addTicket, deleteTicket, getTickets, type FuelTicket } from "@/src/liquidapp/tickets";
+import { addTicketPhoto, localDateString } from "@/src/liquidapp/ticketPhotoHistory";
 
 const money = (n:number) => new Intl.NumberFormat("es-AR",{style:"currency",currency:"ARS",maximumFractionDigits:0}).format(n);
 export default function TicketsScreen() {
@@ -13,7 +14,7 @@ export default function TicketsScreen() {
  useEffect(()=>{void load();},[]);
  const filtered=useMemo(()=>items.filter(x=>x.fuel===fuel),[items,fuel]);
  const sessionTickets=filtered.filter(x=>x.batchId===batchId); const total=sessionTickets.reduce((s,x)=>s+x.amount,0);
- const save=async()=>{const n=Number(amount.replace(",", ".")); if(!Number.isFinite(n)||n<=0){Alert.alert("Importe inválido","Ingresá un importe mayor a cero.");return;} await addTicket({id:String(Date.now()),batchId,fuel,amount:n,date:new Date().toISOString(),note:note.trim()||undefined,photoUri});setAmount("");setNote("");setPhotoUri(undefined);await load();};
+ const save=async()=>{const n=Number(amount.replace(",", ".")); if(!Number.isFinite(n)||n<=0){Alert.alert("Importe inválido","Ingresá un importe mayor a cero.");return;} try { const savedPhoto = photoUri ? await addTicketPhoto(photoUri,localDateString(),fuel,note) : undefined; await addTicket({id:String(Date.now()),batchId,fuel,amount:n,date:new Date().toISOString(),note:note.trim()||undefined,photoUri:savedPhoto?.uri});setAmount("");setNote("");setPhotoUri(undefined);await load(); if(savedPhoto) Alert.alert("Ticket guardado","La foto quedó guardada en Historial de fotos de tickets."); } catch(e) { Alert.alert("No se pudo guardar",e instanceof Error?e.message:"Intentá de nuevo."); } };
  const takePhoto=async()=>{const p=await ImagePicker.requestCameraPermissionsAsync();if(!p.granted){Alert.alert("Permiso necesario","Permití el acceso a la cámara para fotografiar el ticket.");return;}const result=await ImagePicker.launchCameraAsync({mediaTypes:["images"],quality:0.7});if(!result.canceled)setPhotoUri(result.assets[0]?.uri);};
  const pickPhoto=async()=>{const result=await ImagePicker.launchImageLibraryAsync({mediaTypes:["images"],quality:0.7});if(!result.canceled)setPhotoUri(result.assets[0]?.uri);};
  const remove=async(id:string)=>{await deleteTicket(id);await load();};

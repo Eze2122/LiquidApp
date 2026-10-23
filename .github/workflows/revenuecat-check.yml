@@ -28,3 +28,5 @@ jobs:
         run: yarn install --non-interactive
       - name: TypeScript check
         run: npx tsc --noEmit
+      - name: Export Android JavaScript bundle
+        run: npx expo export --platform android

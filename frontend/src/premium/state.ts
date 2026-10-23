@@ -18,18 +18,23 @@ function hasPremium(info: CustomerInfo) {
   return Boolean(info.entitlements.active[PREMIUM_ENTITLEMENT]);
 }
 
-export function isPremium(): boolean { return cached; }
+export function isPremium(): boolean {
+  return cached;
+}
 
 export async function hydratePremium(): Promise<void> {
-  try {
-    const raw = await AsyncStorage.getItem(PREMIUM_KEY);
-    publish(raw === "true");
-  } catch {}
-
   const apiKey = Platform.OS === "android"
     ? process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY
     : process.env.EXPO_PUBLIC_REVENUECAT_IOS_API_KEY;
-  if (!apiKey) return;
+
+  // Never trust the locally stored flag as proof of a paid subscription.
+  // If RevenueCat is not configured, keep Premium disabled rather than
+  // accidentally granting an expired or manually altered entitlement.
+  if (!apiKey) {
+    publish(false);
+    try { await AsyncStorage.setItem(PREMIUM_KEY, "false"); } catch {}
+    return;
+  }
 
   try {
     if (!configured) {
@@ -46,7 +51,9 @@ export async function hydratePremium(): Promise<void> {
     publish(active);
     await AsyncStorage.setItem(PREMIUM_KEY, active ? "true" : "false");
   } catch {
-    // Billing outages must never block the app from opening.
+    // A billing/network outage must never block the app from opening.
+    // Do not grant Premium from cached local state on an unverified response.
+    publish(false);
   }
 }
 

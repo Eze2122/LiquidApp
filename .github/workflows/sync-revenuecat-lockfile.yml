@@ -13,9 +13,6 @@ jobs:
   sync-lockfile:
     if: github.event_name == 'workflow_dispatch' || !contains(github.event.head_commit.message, '[lockfile-sync]')
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: frontend
     steps:
       - uses: actions/checkout@v4
         with:
@@ -27,7 +24,7 @@ jobs:
           cache: yarn
           cache-dependency-path: frontend/yarn.lock
       - name: Regenerate Yarn v1 lockfile
-        run: yarn install --non-interactive
+        run: yarn --cwd frontend install --non-interactive
       - name: Commit lockfile if changed
         run: |
           if git diff --quiet -- frontend/yarn.lock; then

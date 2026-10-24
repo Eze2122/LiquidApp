@@ -35,18 +35,29 @@ jobs:
         working-directory: frontend
         run: yarn install --frozen-lockfile --non-interactive
 
+      - name: Validate RevenueCat Android public SDK key
+        env:
+          EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY: ${{ secrets.EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY }}
+        run: |
+          if [ -z "$EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY" ]; then
+            echo "::error::Missing repository Actions secret EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY. Add the RevenueCat public Android SDK key before building."
+            exit 1
+          fi
+
       - name: Generate native Android project
         working-directory: frontend
         run: npx expo prebuild --platform android --no-install --non-interactive
 
       - name: Build standalone release APK with Gradle
         working-directory: frontend/android
+        env:
+          EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY: ${{ secrets.EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY }}
         run: ./gradlew assembleRelease --no-daemon
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: liquidapp-v107-standalone-release-r2
+          name: liquidapp-v107-premium-release-r3
           path: frontend/android/app/build/outputs/apk/release/app-release.apk
           if-no-files-found: error
           retention-days: 7

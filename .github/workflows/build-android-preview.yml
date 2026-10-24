@@ -39,6 +39,12 @@ jobs:
         working-directory: frontend
         run: npx expo prebuild --platform android --no-install --non-interactive
 
+      - name: Bundle JavaScript for standalone APK
+        working-directory: frontend
+        run: |
+          mkdir -p android/app/src/main/assets
+          npx expo export:embed --platform android --dev false --bundle-output android/app/src/main/assets/index.android.bundle --assets-dest android/app/src/main/res
+
       - name: Build debug APK with Gradle
         working-directory: frontend/android
         run: ./gradlew assembleDebug --no-daemon

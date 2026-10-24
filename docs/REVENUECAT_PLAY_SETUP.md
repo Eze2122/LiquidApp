@@ -7,6 +7,13 @@
 - La versión 106 publicada en prueba no se modifica.
 - No fusionar el PR ni publicar el APK/AAB sin autorización explícita.
 
+## Firma de Google Play — dato importante
+
+- **SHA-1 de la clave de subida (upload key) informado por el usuario:** `07:C3:C5:87:D3:21:67:28:9C:F8:EB:1F:1E:B2:41:D2:1F:56:6B:02`
+- Usar este fingerprint para comparar con el certificado de subida configurado en Play Console.
+- Este SHA-1 es el fingerprint del certificado; no reemplaza el archivo keystore ni su contraseña.
+- Antes de subir una nueva versión, verificar que el AAB esté firmado con la clave de subida correspondiente y conservar intacta la versión 106.
+
 ## Identificadores acordados para la configuración
 
 Antes de crear nada, comprobar en Play Console y RevenueCat que no exista ya un producto equivalente. Si existe, conservar sus IDs actuales y actualizar esta guía con esos valores; no crear duplicados.
@@ -33,7 +40,7 @@ Si todavía no existe, usar estos IDs coherentes:
 1. En el proyecto de RevenueCat de LiquidApp, abrir Apps y comprobar que la app de Google Play corresponde al paquete `com.liquidapp.app` y que las credenciales de Google Play son válidas.
 2. En Product catalog, importar/sincronizar el producto `liquidapp_premium_monthly` desde Google Play.
 3. Crear el entitlement `premium` si aún no existe y adjuntarle el producto mensual.
-4. Crear la offering `default), marcarla como Current y añadir el paquete Monthly (`$rc_monthly`) vinculado al producto mensual.
+4. Crear la offering `default`, marcarla como Current y añadir el paquete Monthly (`$rc_monthly`) vinculado al producto mensual.
 5. Comprobar que la offering actual devuelve al menos un paquete mensual.
 
 ## Clave pública de SDK
@@ -52,7 +59,7 @@ El código actual lee `process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY`. Sin 
 - [ ] Offering `default` marcada como Current con paquete mensual.
 - [ ] Clave pública Android inyectada de forma segura en el bundle.
 - [ ] Tester de licencia/cuenta de prueba configurado en Google Play.
-- [ ] APK de integración instalado desde una fuente de prueba compatible con Google Play Billing.
+- [ ] AAB de integración firmado con la clave de subida correcta e instalado desde una pista de prueba compatible con Google Play Billing.
 - [ ] Compra de prueba activa el entitlement y elimina anuncios.
 - [ ] Restaurar compras vuelve a reconocer el entitlement.
 

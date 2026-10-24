@@ -19,10 +19,10 @@ on:
         default: ''
 
 env:
-  AAB_OUT: LiquidApp-1.0.2-106.aab
+  AAB_OUT: LiquidApp-1.0.3-107.aab
   EXPECTED_PKG: com.liquidapp.app
-  EXPECTED_VNAME: 1.0.2
-  EXPECTED_VCODE: "106"
+  EXPECTED_VNAME: 1.0.3
+  EXPECTED_VCODE: "107"
   EXPECTED_SHA256: F6:A7:36:E4:11:89:E3:90:68:06:58:E1:61:83:49:88:54:69:8A:EE:78:A7:90:09:4E:B9:AA:D3:77:91:E3:21
 
 jobs:
@@ -40,9 +40,10 @@ jobs:
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY: ${{ secrets.EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY }}
         run: |
           missing=0
-          for v in ANDROID_KEYSTORE_BASE64 ANDROID_KEYSTORE_PASSWORD ANDROID_KEY_ALIAS ANDROID_KEY_PASSWORD EXPO_TOKEN; do
+          for v in ANDROID_KEYSTORE_BASE64 ANDROID_KEYSTORE_PASSWORD ANDROID_KEY_ALIAS ANDROID_KEY_PASSWORD EXPO_TOKEN EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY; do
             if [ -z "${!v}" ]; then echo "::error::Falta el secret requerido: $v"; missing=1; fi
           done
           if [ "$missing" -ne 0 ]; then
@@ -97,6 +98,7 @@ jobs:
         working-directory: frontend
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY: ${{ secrets.EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY }}
         run: |
           eas build \
             --platform android \
@@ -145,7 +147,7 @@ jobs:
       - name: Publicar AAB como artifact descargable (solo si verifico OK)
         uses: actions/upload-artifact@v4
         with:
-          name: LiquidApp-AAB
+          name: LiquidApp-AAB-1.0.3-107
           path: ${{ env.AAB_OUT }}
           if-no-files-found: error
 

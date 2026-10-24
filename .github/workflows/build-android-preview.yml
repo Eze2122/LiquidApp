@@ -1,4 +1,4 @@
-name: Build LiquidApp Android APK with GitHub Actions (Standalone v107)
+name: Build LiquidApp Android APK with GitHub Actions (Standalone Release v107)
 
 on:
   workflow_dispatch:
@@ -10,7 +10,7 @@ permissions:
   contents: read
 
 jobs:
-  build-debug-apk:
+  build-release-apk:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout integration branch
@@ -39,20 +39,14 @@ jobs:
         working-directory: frontend
         run: npx expo prebuild --platform android --no-install --non-interactive
 
-      - name: Bundle JavaScript for standalone APK
-        working-directory: frontend
-        run: |
-          mkdir -p android/app/src/main/assets
-          npx expo export:embed --platform android --dev false --bundle-output android/app/src/main/assets/index.android.bundle --assets-dest android/app/src/main/res
-
-      - name: Build debug APK with Gradle
+      - name: Build standalone release APK with Gradle
         working-directory: frontend/android
-        run: ./gradlew assembleDebug --no-daemon
+        run: ./gradlew assembleRelease --no-daemon
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: liquidapp-v107-standalone-bundle-r1
-          path: frontend/android/app/build/outputs/apk/debug/app-debug.apk
+          name: liquidapp-v107-standalone-release-r2
+          path: frontend/android/app/build/outputs/apk/release/app-release.apk
           if-no-files-found: error
           retention-days: 7

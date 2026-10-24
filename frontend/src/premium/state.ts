@@ -4,7 +4,7 @@ import Purchases, { type CustomerInfo, type PurchasesPackage } from "react-nativ
 import { Platform } from "react-native";
 
 const PREMIUM_KEY = "liquidapp_is_premium";
-const PREMIUM_ENTITLEMENT = "premium";
+const PREMIUM_ENTITLEMENT = "liquidapp_pro";
 let cached = false;
 let configured = false;
 const listeners = new Set<(value: boolean) => void>();

@@ -1,0 +1,38 @@
+name: Sync RevenueCat lockfile
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - liquidapp-revenuecat-integration
+
+permissions:
+  contents: write
+
+jobs:
+  sync-lockfile:
+    if: github.event_name == 'workflow_dispatch' || !contains(github.event.head_commit.message, '[lockfile-sync]')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: liquidapp-revenuecat-integration
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: yarn
+          cache-dependency-path: frontend/yarn.lock
+      - name: Regenerate Yarn v1 lockfile
+        run: yarn --cwd frontend install --non-interactive
+      - name: Commit lockfile if changed
+        run: |
+          if git diff --quiet -- frontend/yarn.lock; then
+            echo "Lockfile is already synchronized."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add frontend/yarn.lock
+          git commit -m "[lockfile-sync] Synchronize RevenueCat dependencies"
+          git push origin HEAD:liquidapp-revenuecat-integration
